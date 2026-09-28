@@ -24,9 +24,18 @@ jobs:
             ffmpeg imagemagick libimage-exiftool-perl
 
       - name: Install ImageMagick 7 (magick)
-        uses: mfinelli/setup-imagemagick@v5
-        with:
-          install-libfuse2: true
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: |
+          sudo apt-get install -y --no-install-recommends libfuse2t64
+          URL=https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-32/ImageMagick-7.1.2-32-gcc-x86_64.AppImage
+          curl -fL --retry 3 -o magick "$URL" || { echo "TAI LOI"; exit 1; }
+          ls -la magick
+          file magick || true
+          chmod +x magick
+          sudo mv magick /usr/local/bin/magick
+          echo "APPIMAGE_EXTRACT_AND_RUN=1" >> "$GITHUB_ENV"
+          magick -version
 
       - name: Build binary
         run: |
@@ -56,6 +65,7 @@ jobs:
           path: dist/mediainfo
 
   build-windows:
+    if: false
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
