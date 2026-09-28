@@ -24,12 +24,9 @@ jobs:
             ffmpeg imagemagick libimage-exiftool-perl
 
       - name: Install ImageMagick 7 (magick)
-        run: |
-          sudo apt-get install -y --no-install-recommends libfuse2t64
-          sudo curl -fL --retry 3 -o /usr/local/bin/magick \
-            https://download.imagemagick.org/ImageMagick/download/binaries/magick
-          sudo chmod +x /usr/local/bin/magick
-          magick -version
+        uses: mfinelli/setup-imagemagick@v5
+        with:
+          install-libfuse2: true
 
       - name: Build binary
         run: |
