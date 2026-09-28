@@ -19,10 +19,26 @@ jobs:
       - name: Install dependencies
         run: |
           pip install pyinstaller Pillow numpy
+          sudo apt install -y ffmpeg imagemagick libimage-exiftool-perl
 
       - name: Build binary
         run: |
           pyinstaller --onefile --paths . --name mediainfo main.py
+
+      - name: Test binary
+        run: |
+          python3 -c "
+          from PIL import Image, ImageDraw
+          img = Image.new('RGB', (200, 200), color=(100, 149, 237))
+          draw = ImageDraw.Draw(img)
+          draw.rectangle([50, 50, 150, 150], fill=(255, 0, 0))
+          img.save('/tmp/test.jpg')
+          img.save('/tmp/test.png')
+          "
+          ./dist/mediainfo -pt /tmp/test.jpg
+          ./dist/mediainfo -pqt /tmp/test.png
+          ./dist/mediainfo -diff /tmp/test.jpg /tmp/test.png
+          echo "All tests passed"
 
       - name: Upload Linux binary
         uses: actions/upload-artifact@v4
@@ -40,13 +56,37 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           pip install pyinstaller Pillow numpy
+
+      - name: Install ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+
+      - name: Install exiftool imagemagick sha256sum
+        run: |
+          choco install exiftool imagemagick msys2 -y
+          echo "C:\tools\msys64\usr\bin" >> $env:GITHUB_PATH
+          echo "C:\Program Files\ImageMagick-7.1.1-Q16-HDRI" >> $env:GITHUB_PATH
 
       - name: Build binary
         run: |
           pyinstaller --onefile --paths . --name mediainfo main.py
+
+      - name: Test binary
+        run: |
+          python -c "
+          from PIL import Image, ImageDraw
+          img = Image.new('RGB', (200, 200), color=(100, 149, 237))
+          draw = ImageDraw.Draw(img)
+          draw.rectangle([50, 50, 150, 150], fill=(255, 0, 0))
+          img.save('C:/test.jpg')
+          img.save('C:/test.png')
+          "
+          dist\mediainfo.exe -pt C:\test.jpg
+          dist\mediainfo.exe -pqt C:\test.png
+          dist\mediainfo.exe -diff C:\test.jpg C:\test.png
+          echo "All tests passed"
 
       - name: Upload Windows binary
         uses: actions/upload-artifact@v4
