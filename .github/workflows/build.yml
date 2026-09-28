@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -19,25 +19,29 @@ jobs:
       - name: Install dependencies
         run: |
           pip install pyinstaller Pillow numpy
-          sudo apt install -y ffmpeg imagemagick libimage-exiftool-perl
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends --fix-missing \
+            ffmpeg imagemagick libimage-exiftool-perl
 
       - name: Build binary
         run: |
           pyinstaller --onefile --paths . --name mediainfo main.py
 
       - name: Test binary
+        shell: bash
         run: |
-          python3 -c "
-          from PIL import Image, ImageDraw
-          img = Image.new('RGB', (200, 200), color=(100, 149, 237))
-          draw = ImageDraw.Draw(img)
-          draw.rectangle([50, 50, 150, 150], fill=(255, 0, 0))
-          img.save('/tmp/test.jpg')
-          img.save('/tmp/test.png')
-          "
-          ./dist/mediainfo -pt /tmp/test.jpg
-          ./dist/mediainfo -pqt /tmp/test.png
-          ./dist/mediainfo -diff /tmp/test.jpg /tmp/test.png
+          mkdir -p testimg
+          curl -fL --retry 3 -o testimg/1.jpg  https://picsum.photos/id/10/600/400.jpg
+          curl -fL --retry 3 -o testimg/2.jpg  https://picsum.photos/id/20/600/400.jpg
+          curl -fL --retry 3 -o testimg/3.webp https://picsum.photos/id/30/600/400.webp
+          curl -fL --retry 3 -o testimg/4.png  https://httpbin.org/image/png
+          ls -la testimg
+          ./dist/mediainfo -pt  testimg/1.jpg
+          ./dist/mediainfo -pt  testimg/2.jpg
+          ./dist/mediainfo -pt  testimg/3.webp
+          ./dist/mediainfo -pqt testimg/4.png
+          ./dist/mediainfo -diff testimg/1.jpg testimg/2.jpg
+          ./dist/mediainfo -diff testimg/1.jpg testimg/4.png
           echo "All tests passed"
 
       - name: Upload Linux binary
@@ -66,26 +70,29 @@ jobs:
       - name: Install exiftool imagemagick sha256sum
         run: |
           choco install exiftool imagemagick msys2 -y
-          echo "C:\tools\msys64\usr\bin" >> $env:GITHUB_PATH
-          echo "C:\Program Files\ImageMagick-7.1.1-Q16-HDRI" >> $env:GITHUB_PATH
+          "C:\tools\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $im = (Get-ChildItem "C:\Program Files" -Directory -Filter "ImageMagick*" | Select-Object -First 1).FullName
+          $im | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Build binary
         run: |
           pyinstaller --onefile --paths . --name mediainfo main.py
 
       - name: Test binary
+        shell: bash
         run: |
-          python -c "
-          from PIL import Image, ImageDraw
-          img = Image.new('RGB', (200, 200), color=(100, 149, 237))
-          draw = ImageDraw.Draw(img)
-          draw.rectangle([50, 50, 150, 150], fill=(255, 0, 0))
-          img.save('C:/test.jpg')
-          img.save('C:/test.png')
-          "
-          dist\mediainfo.exe -pt C:\test.jpg
-          dist\mediainfo.exe -pqt C:\test.png
-          dist\mediainfo.exe -diff C:\test.jpg C:\test.png
+          mkdir -p testimg
+          curl -fL --retry 3 -o testimg/1.jpg  https://picsum.photos/id/10/600/400.jpg
+          curl -fL --retry 3 -o testimg/2.jpg  https://picsum.photos/id/20/600/400.jpg
+          curl -fL --retry 3 -o testimg/3.webp https://picsum.photos/id/30/600/400.webp
+          curl -fL --retry 3 -o testimg/4.png  https://httpbin.org/image/png
+          ls -la testimg
+          ./dist/mediainfo.exe -pt  testimg/1.jpg
+          ./dist/mediainfo.exe -pt  testimg/2.jpg
+          ./dist/mediainfo.exe -pt  testimg/3.webp
+          ./dist/mediainfo.exe -pqt testimg/4.png
+          ./dist/mediainfo.exe -diff testimg/1.jpg testimg/2.jpg
+          ./dist/mediainfo.exe -diff testimg/1.jpg testimg/4.png
           echo "All tests passed"
 
       - name: Upload Windows binary
