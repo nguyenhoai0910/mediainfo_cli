@@ -65,7 +65,7 @@ jobs:
           path: dist/mediainfo
 
   build-windows:
-    if: false
+    #if: false
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
