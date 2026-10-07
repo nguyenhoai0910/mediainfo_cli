@@ -3,7 +3,7 @@ import subprocess, json
 def read(path: str) -> dict:
     result = subprocess.run(
         ['ffprobe', '-v', 'error', '-print_format', 'json',
-         '-show_format', '-show_streams', path],
+         '-show_format', '-show_streams', '-i', path],
         capture_output=True, text=True
     )
     info = json.loads(result.stdout)
