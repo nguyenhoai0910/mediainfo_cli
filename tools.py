@@ -37,9 +37,21 @@ def check_all() -> list:
     return missing
 
 
+def clean_env() -> dict:
+    """Environment for child processes, without PyInstaller's library path."""
+    env = os.environ.copy()
+    for var in ('LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH'):
+        orig = env.get(var + '_ORIG')
+        if orig is not None:
+            env[var] = orig      # restore the user's original value
+        else:
+            env.pop(var, None)   # it was not set before, so remove it
+    return env
+
+
 def run(cmd: list) -> subprocess.CompletedProcess:
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, env=clean_env())
     except FileNotFoundError:
         raise RuntimeError(f"Cannot run '{cmd[0]}': file not found")
     except PermissionError:
