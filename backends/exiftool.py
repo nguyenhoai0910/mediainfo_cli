@@ -1,4 +1,6 @@
-import subprocess, json, os
+import json
+import os
+from tools import find_tool, run
 
 def get_compression_mode(path: str) -> str:
     """Đọc binary header để xác định Lossy/Lossless chính xác."""
@@ -65,14 +67,11 @@ def format_size_mib(path: str) -> str:
 
 
 def read(path: str) -> dict:
-    result = subprocess.run(
-        ['exiftool', '-j',
-         '-ImageWidth', '-ImageHeight',
-         '-FileType', '-BitDepth', '-BitsPerSample',
-         '-YCbCrSubSampling', '-Comment',
-         '--', path],
-        capture_output=True, text=True
-    )
+    result = run([find_tool('exiftool'), '-j',
+                  '-ImageWidth', '-ImageHeight',
+                  '-FileType', '-BitDepth', '-BitsPerSample',
+                  '-YCbCrSubSampling', '-Comment',
+                  '--', path])
     data = json.loads(result.stdout)[0]
 
     return {
