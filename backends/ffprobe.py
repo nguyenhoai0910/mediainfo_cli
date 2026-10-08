@@ -1,13 +1,12 @@
-import subprocess, json
+import json
+from tools import find_tool, run
+
 
 def read(path: str) -> dict:
-    result = subprocess.run(
-        ['ffprobe', '-v', 'error', '-print_format', 'json',
-         '-show_format', '-show_streams', path],
-        capture_output=True, text=True
-    )
+    result = run([find_tool('ffprobe'), '-v', 'error', '-print_format', 'json',
+                  '-show_format', '-show_streams', path])
     info = json.loads(result.stdout)
-    video = next((s for s in info['streams'] if s['codec_type'] == 'video'), {})
+    video = next((s for s in info.get('streams', []) if s.get('codec_type') == 'video'), {})
     fmt = info.get('format', {})
     tags = fmt.get('tags', {})
 
@@ -20,8 +19,8 @@ def read(path: str) -> dict:
     fps_raw = video.get('r_frame_rate', '0/1')
     try:
         num, den = fps_raw.split('/')
-        fps = f"{int(num)/int(den):.3f}"
-    except:
+        fps = f"{int(num) / int(den):.3f}"
+    except Exception:
         fps = None
 
     return {
